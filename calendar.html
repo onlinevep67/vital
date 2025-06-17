@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vital IT Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Define CSS Variables for easy theming and consistency */
+        :root {
+            --primary-green: #4CAF50;
+            --primary-green-dark: #45a049;
+            --primary-blue: #3498db;
+            --primary-blue-dark: #2980b9;
+            --primary-red: #e74c3c;
+            --primary-red-dark: #c0392b;
+            --primary-orange: #f39c12;
+            --primary-orange-dark: #e67e22;
+            --primary-purple: #9b59b6;
+            --primary-purple-dark: #8e44ad;
+
+            --text-dark: #2c3e50;
+            --text-medium: #555;
+            --text-light: #7f8c8d;
+
+            --bg-light: #f0f2f5;
+            --bg-card: #ffffff;
+            --bg-today: #e6ffee;
+            --bg-hover: #e9f5e9;
+            --bg-empty: #f8f9fa;
+            --bg-event: #ecf0f1;
+            --bg-past-event: #f2f2f2;
+            --bg-warning: #fff3cd;
+
+            --border-light: #ddd;
+            --border-today: #4CAF50;
+
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
+            --shadow-strong: rgba(0, 0, 0, 0.15);
+        }
+
+        /* General Body & Root Styles */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            background-color: var(--bg-light);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: var(--text-medium);
+            line-height: 1.6;
+        }
+
+        /* Calendar Container */
+        .calendar-container {
+            background-color: var(--bg-card);
+            border-radius: 16px; /* Slightly more rounded */
+            box-shadow: 0 10px 30px var(--shadow-medium); /* Enhanced shadow */
+            width: 100%;
+            max-width: 960px; /* Increased max-width for modern display */
+            padding: 35px; /* Slightly more padding */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 25px; /* Increased gap */
+        }
+
+        /* Header with Calendar Name and Navigation */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .calendar-header h2 {
+            font-size: 2.5em; /* Larger title */
+            color: var(--text-dark);
+            margin: 0;
+            font-weight: 700; /* Bolder */
+        }
+
+        .calendar-nav-buttons {
+            display: flex;
+            gap: 15px; /* Space between nav buttons */
+        }
+
+        .calendar-header button {
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            border-radius: 10px; /* More rounded buttons */
+            padding: 12px 20px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px var(--shadow-light);
+        }
+
+        .calendar-header button:hover {
+            background-color: var(--primary-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px var(--shadow-medium);
+        }
+
+        .calendar-header button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px var(--shadow-light);
+        }
+
+        /* Weekdays Grid */
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            font-weight: 600;
+            color: var(--text-light);
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 12px; /* More padding */
+            margin-bottom: 12px;
+        }
+
+        .calendar-weekdays div {
+            text-align: center;
+            padding: 8px 0;
+            font-size: 0.9em; /* Slightly smaller for compactness */
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Days Grid */
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px; /* Increased gap for better spacing */
+        }
+
+        .calendar-day {
+            background-color: var(--bg-card);
+            border-radius: 10px; /* Consistent rounded corners */
+            padding: 18px 12px; /* More padding */
+            min-height: 130px; /* Ensure consistent height for cells */
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            box-shadow: 0 2px 5px var(--shadow-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px; /* Gap between day number and events */
+            overflow: hidden;
+        }
+
+        .calendar-day:hover {
+            background-color: var(--bg-hover);
+            box-shadow: 0 6px 15px var(--shadow-medium);
+        }
+
+        .calendar-day.today {
+            background-color: var(--bg-today);
+            border: 2px solid var(--border-today);
+            box-shadow: 0 4px 12px var(--shadow-strong);
+            transform: scale(1.02); /* Slight scale for today */
+        }
+
+        .calendar-day.empty {
+            background-color: var(--bg-empty);
+            cursor: default;
+            box-shadow: none;
+            opacity: 0.7;
+            pointer-events: none; /* Disable clicks on empty days */
+        }
+        .calendar-day.empty:hover {
+            background-color: var(--bg-empty); /* No change on hover for empty */
+            box-shadow: none;
+        }
+
+        .calendar-day .day-number {
+            font-size: 1.6em; /* Larger day number */
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .calendar-day .event-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            flex-grow: 1;
+            text-align: left;
+            overflow-y: auto;
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--primary-green) lightgrey; /* Firefox */
+        }
+        .calendar-day .event-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .calendar-day .event-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .calendar-day .event-list::-webkit-scrollbar-thumb {
+            background: var(--primary-green);
+            border-radius: 10px;
+        }
+
+        .calendar-day .event-list li {
+            font-size: 0.8em; /* Slightly smaller event text */
+            color: var(--text-medium);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+            background-color: var(--bg-event);
+            padding: 4px 8px; /* More padding for event items */
+            border-radius: 6px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .calendar-day .event-list li:hover {
+            background-color: #dbe3e5;
+            transform: translateY(-1px);
+        }
+        .calendar-day .event-list li.past-event {
+            color: var(--text-light);
+            text-decoration: line-through;
+            background-color: var(--bg-past-event);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+        .action-buttons button {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px var(--shadow-light);
+        }
+        .action-buttons button:hover {
+            background-color: var(--primary-blue-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px var(--shadow-medium);
+        }
+        .action-buttons button#addEventBtn {
+            background-color: var(--primary-green);
+        }
+        .action-buttons button#addEventBtn:hover {
+            background-color: var(--primary-green-dark);
+        }
+        .action-buttons button#createMeetBtn {
+            background-color: var(--primary-red);
+        }
+        .action-buttons button#createMeetBtn:hover {
+            background-color: var(--primary-red-dark);
+        }
+        .action-buttons button#signOutBtn {
+            background-color: #7f8c8d; /* A neutral gray for sign out */
+            margin-left: auto; /* Push sign out button to the right */
+        }
+        .action-buttons button#signOutBtn:hover {
+            background-color: #6c7a89;
+        }
+
+        /* Modal Base Style */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6); /* Slightly darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 15px 40px var(--shadow-strong); /* Stronger shadow for modal */
+            width: 90%;
+            max-width: 550px; /* Slightly wider modal */
+            position: relative;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .modal.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .close-button {
+            color: var(--text-light);
+            font-size: 30px; /* Larger close button */
+            font-weight: bold;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: var(--text-dark);
+            text-decoration: none;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--text-dark);
+            font-size: 2em; /* Larger modal title */
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        .modal-content label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-medium);
+            font-size: 0.95em;
+        }
+
+        .modal-content input[type="text"],
+        .modal-content input[type="date"],
+        .modal-content input[type="time"],
+        .modal-content textarea {
+            width: calc(100% - 24px); /* Account for padding */
+            padding: 12px;
+            margin-bottom: 18px; /* Consistent margin */
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .modal-content input[type="text"]:focus,
+        .modal-content input[type="date"]:focus,
+        .modal-content input[type="time"]:focus,
+        .modal-content textarea:focus {
+            border-color: var(--primary-green);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.25); /* Stronger glow */
+        }
+
+        .modal-content textarea {
+            resize: vertical;
+            min-height: 90px; /* Slightly taller textarea */
+        }
+
+        .modal-content .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px; /* More spacing */
+            gap: 12px; /* More spacing */
+        }
+        .modal-content .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            transform: scale(1.4); /* Larger checkbox */
+        }
+
+        .modal-content button {
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 28px; /* Larger buttons */
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            width: 100%;
+            box-shadow: 0 4px 10px var(--shadow-light);
+            margin-top: 10px; /* Space between buttons */
+        }
+
+        .modal-content button:hover {
+            background-color: var(--primary-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px var(--shadow-medium);
+        }
+
+        .modal-content button#deleteEventBtn {
+            background-color: var(--primary-red);
+        }
+        .modal-content button#deleteEventBtn:hover {
+            background-color: var(--primary-red-dark);
+        }
+        .modal-content button#startMeetingCompanionBtn {
+            background-color: var(--primary-blue);
+        }
+        .modal-content button#startMeetingCompanionBtn:hover {
+            background-color: var(--primary-blue-dark);
+        }
+
+        /* Meet URL Modal specific */
+        #meetModal .modal-content {
+            text-align: center;
+        }
+        #meetModal #meetUrlOutput {
+            word-break: break-all;
+            background-color: var(--bg-event);
+            padding: 18px; /* More padding */
+            border-radius: 8px;
+            font-size: 1.1em;
+            margin-bottom: 25px; /* More margin */
+            color: var(--text-dark);
+            overflow-x: auto;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        #meetModal .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px; /* Space between buttons */
+            flex-wrap: wrap;
+        }
+        #meetModal .button-group button {
+            width: auto; /* Override 100% width */
+            padding: 10px 20px;
+            font-size: 1em;
+            margin-top: 0; /* Remove top margin from general button style */
+        }
+        #meetModal .button-group button:last-child {
+             background-color: var(--primary-blue);
+        }
+        #meetModal .button-group button:last-child:hover {
+             background-color: var(--primary-blue-dark);
+        }
+
+        /* Companion Recording Status */
+        #recordingStatus {
+            margin-top: 25px; /* More spacing */
+            padding: 20px; /* More padding */
+            background-color: var(--bg-warning);
+            border: 1px solid #ffeeba;
+            border-radius: 10px;
+            color: #856404;
+            display: none;
+            align-items: center;
+            gap: 15px; /* More spacing */
+            font-size: 1em; /* Standard font size */
+            flex-direction: column;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        #recordingStatus.active {
+            display: flex;
+        }
+        #recordingStatus .dot {
+            width: 14px; /* Larger dot */
+            height: 14px;
+            background-color: var(--primary-red);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        #recordingActions {
+            margin-top: 15px;
+            display: flex;
+            gap: 12px; /* More spacing */
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        #recordingActions button {
+            background-color: var(--primary-orange);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px var(--shadow-light);
+            width: auto; /* Override 100% width from modal */
+        }
+        #recordingActions button:hover {
+            background-color: var(--primary-orange-dark);
+            transform: translateY(-1px);
+        }
+        #recordingActions button#stopRecordingBtn {
+            background-color: var(--primary-red);
+        }
+        #recordingActions button#stopRecordingBtn:hover {
+            background-color: var(--primary-red-dark);
+        }
+        #recordingActions button#downloadRecordingBtn {
+            background-color: #2ecc71; /* Green for Download */
+            display: none;
+        }
+        #recordingActions button#downloadRecordingBtn:hover {
+            background-color: #27ae60;
+        }
+        #recordingActions button#playRecordingBtn {
+            background-color: var(--primary-purple);
+            display: none;
+        }
+        #recordingActions button#playRecordingBtn:hover {
+            background-color: var(--primary-purple-dark);
+        }
+        #recordingStatus p {
+            font-size: 0.85em;
+            color: #a07a05;
+        }
+        #audioPlayback {
+            margin-top: 15px;
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background-color: #f7f7f7;
+        }
+
+
+        /* Responsive Adjustments (Mobile-First) */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px; /* Less padding on small screens */
+            }
+            .calendar-container {
+                padding: 20px;
+                border-radius: 10px; /* Slightly less rounded */
+                box-shadow: 0 5px 15px var(--shadow-medium);
+                gap: 15px;
+            }
+            .calendar-header {
+                flex-direction: column; /* Stack header elements */
+                align-items: flex-start;
+                margin-bottom: 15px;
+                gap: 10px;
+            }
+            .calendar-header h2 {
+                font-size: 2em;
+                text-align: center;
+                width: 100%;
+            }
+            .calendar-nav-buttons {
+                width: 100%;
+                justify-content: space-between;
+                gap: 8px;
+            }
+            .calendar-header button {
+                padding: 10px 15px;
+                font-size: 1em;
+                border-radius: 8px;
+            }
+            .calendar-weekdays div {
+                font-size: 0.8em;
+            }
+            .calendar-day {
+                min-height: 100px;
+                padding: 10px 5px;
+                border-radius: 8px;
+                gap: 5px;
+            }
+            .calendar-day .day-number {
+                font-size: 1.3em;
+            }
+            .calendar-day .event-list li {
+                font-size: 0.75em;
+                padding: 3px 5px;
+                border-radius: 4px;
+            }
+            .action-buttons {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .action-buttons button {
+                padding: 10px 15px;
+                font-size: 1em;
+                border-radius: 8px;
+                margin-left: 0; /* Remove auto margin for stacking */
+            }
+            .modal-content {
+                width: 95%;
+                padding: 25px;
+                border-radius: 10px;
+            }
+            .modal-content h3 {
+                font-size: 1.7em;
+                margin-bottom: 20px;
+            }
+            .modal-content input, .modal-content textarea {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+            .modal-content button {
+                padding: 12px 20px;
+                font-size: 1em;
+                border-radius: 8px;
+            }
+            #meetModal .button-group button {
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+            #recordingStatus {
+                padding: 15px;
+                border-radius: 8px;
+                font-size: 0.9em;
+            }
+            #recordingStatus .dot {
+                width: 12px;
+                height: 12px;
+            }
+            #recordingActions button {
+                padding: 8px 12px;
+                font-size: 0.85em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calendar-container {
+                padding: 15px;
+                gap: 10px;
+            }
+            .calendar-header h2 {
+                font-size: 1.8em;
+            }
+            .calendar-header button {
+                font-size: 0.9em;
+                padding: 8px 12px;
+            }
+            .calendar-weekdays div {
+                font-size: 0.75em;
+            }
+            .calendar-day {
+                min-height: 80px;
+                padding: 8px 3px;
+                gap: 3px;
+            }
+            .calendar-day .day-number {
+                font-size: 1.1em;
+            }
+            .modal-content {
+                padding: 20px;
+            }
+            .modal-content h3 {
+                font-size: 1.5em;
+            }
+            .action-buttons {
+                gap: 8px;
+            }
+            .action-buttons button {
+                font-size: 0.9em;
+                padding: 8px 12px;
+            }
+            #recordingStatus p {
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <div class="calendar-name">
+                <h2>Vital IT Calendar</h2>
+            </div>
+            <div class="calendar-nav-buttons">
+                <button id="prevMonth"><</button>
+                <h2 id="currentMonthYear"></h2>
+                <button id="nextMonth">></button>
+            </div>
+        </div>
+
+        <div class="calendar-weekdays">
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+        </div>
+
+        <div class="calendar-days" id="calendarDays">
+            <!-- Calendar days will be generated here by JavaScript -->
+        </div>
+
+        <div class="action-buttons">
+            <button id="addEventBtn">Add New Event</button>
+            <button id="createMeetBtn">Generate Quick Meet Link</button>
+            <button id="signOutBtn">Sign Out</button>
+        </div>
+
+        <!-- Recording Status/Controls -->
+        <div id="recordingStatus">
+            <span style="display: flex; align-items: center; gap: 10px;">
+                <span class="dot"></span>
+                <span>Meeting recording in progress...</span>
+            </span>
+            <div id="recordingActions">
+                <button id="stopRecordingBtn">Stop Recording</button>
+                <button id="playRecordingBtn">Play Recording</button>
+                <button id="downloadRecordingBtn">Download Recording</button>
+            </div>
+            <p>
+                Note: Browser security prevents true "background" recording without active tab.
+                You might need to grant microphone permissions.
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Event Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3 id="eventModalTitle">Add New Event</h3>
+            <form id="eventForm">
+                <input type="hidden" id="eventId">
+                <label for="eventTitle">Event Title:</label>
+                <input type="text" id="eventTitle" required>
+
+                <label for="eventDate">Date:</label>
+                <input type="date" id="eventDate" required>
+
+                <label for="eventTime">Time:</label>
+                <input type="time" id="eventTime" required>
+
+                <label for="eventDescription">Description:</label>
+                <textarea id="eventDescription" rows="4"></textarea>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="addMeetLink">
+                    <label for="addMeetLink">Generate Google Meet Link for this event?</label>
+                </div>
+                <input type="hidden" id="eventMeetLink"> <!-- To store the generated link if any -->
+                <input type="hidden" id="eventRecordingLink"> <!-- To store the recording link -->
+                <input type="hidden" id="eventRecordingPath"> <!-- To store the recording path for deletion -->
+
+
+                <button type="submit" id="saveEventBtn">Save Event</button>
+                <button type="button" id="deleteEventBtn" style="display: none;">Delete Event</button>
+                <button type="button" id="startMeetingCompanionBtn" style="display: none;">Start Meeting Companion</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Google Meet URL Display Modal -->
+    <div id="meetModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3>Google Meet Link Generated</h3>
+            <p id="meetUrlOutput"></p>
+            <div class="button-group">
+                <button onclick="copyMeetLink()">Copy Link</button>
+                <button onclick="openMeetLink()">Open Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio element for playback -->
+    <audio id="audioPlayback" controls style="display: none;"></audio>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+    <!-- Google API Client Library -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBe9a58zaQCrBSGeWwcIVa_PnZABoH6zV4",
+            authDomain: "tudds-ccd0wn.firebaseapp.com",
+            databaseURL: "https://tudds-ccd0wn-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tudds-ccd0wn",
+            storageBucket: "tudds-ccd0wn.appspot.com",
+            messagingSenderId: "786974954352",
+            appId: "1:786974954352:web:5f933f5a2f9f386d9bb5b5",
+            measurementId: "G-YKTV36XJFS"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+        const storage = firebase.storage();
+
+        let eventsRef; // Will be set after user is authenticated
+        let recordingsStorageRef; // Will be set after user is authenticated
+        let currentUserId = null; // To store the authenticated user's UID
+
+        // --- Google API Credentials ---
+        const CLIENT_ID = '1014324198120-id1be4pec0lnp2888vbi8o4idmcnnglk.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyCbEaTnZF-yMGZTjUHt1s5dywAIzOL-iU4';
+        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
+        const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+
+        let googleAuth; // Will hold gapi.auth2.GoogleAuth object
+
+        // --- DOM Elements ---
+        const calendarDays = document.getElementById('calendarDays');
+        const currentMonthYear = document.getElementById('currentMonthYear');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const addEventBtn = document.getElementById('addEventBtn');
+        const createMeetBtn = document.getElementById('createMeetBtn');
+        const signOutBtn = document.getElementById('signOutBtn'); // Sign out button
+
+        const eventModal = document.getElementById('eventModal');
+        const eventModalTitle = document.getElementById('eventModalTitle');
+        const eventForm = document.getElementById('eventForm');
+        const eventIdInput = document.getElementById('eventId');
+        const eventTitleInput = document.getElementById('eventTitle');
+        const eventDateInput = document.getElementById('eventDate');
+        const eventTimeInput = document.getElementById('eventTime');
+        const eventDescriptionInput = document.getElementById('eventDescription');
+        const addMeetLinkCheckbox = document.getElementById('addMeetLink');
+        const eventMeetLinkInput = document.getElementById('eventMeetLink');
+        const eventRecordingLinkInput = document.getElementById('eventRecordingLink');
+        const eventRecordingPathInput = document.getElementById('eventRecordingPath'); // New input for recording path
+        const saveEventBtn = document.getElementById('saveEventBtn');
+        const deleteEventBtn = document.getElementById('deleteEventBtn');
+        const startMeetingCompanionBtn = document.getElementById('startMeetingCompanionBtn');
+        const closeButtons = document.querySelectorAll('.close-button');
+
+        const meetModal = document.getElementById('meetModal');
+        const meetUrlOutput = document.getElementById('meetUrlOutput');
+
+        const recordingStatusDiv = document.getElementById('recordingStatus');
+        const stopRecordingBtn = document.getElementById('stopRecordingBtn');
+        const downloadRecordingBtn = document.getElementById('downloadRecordingBtn');
+        const playRecordingBtn = document.getElementById('playRecordingBtn');
+        const audioPlayback = document.getElementById('audioPlayback');
+
+        // --- Global Variables ---
+        let currentDate = new Date();
+        let events = []; // Events will be populated from Firebase
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordingTimeout;
+        let activeMeetingEventId = null;
+
+        // --- Authentication Check and Setup ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log("User authenticated:", user.uid);
+                currentUserId = user.uid;
+                // Initialize Firebase Realtime Database and Storage references for the specific user
+                eventsRef = db.ref('users/' + currentUserId + '/events');
+                recordingsStorageRef = storage.ref('users/' + currentUserId + '/recordings');
+
+                // Start listening for events from Firebase
+                eventsRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    events = [];
+                    if (data) {
+                        for (let id in data) {
+                            events.push({ ...data[id], id: id });
+                        }
+                    }
+                    console.log("Events loaded/updated from Firebase for user:", currentUserId, events);
+                    renderCalendar(); // Re-render calendar whenever events change
+                }, (error) => {
+                    console.error("Firebase Realtime Database read failed:", error);
+                    alert("Failed to load events from server. Please check your internet connection.");
+                });
+
+                // Initialize Google API Client if it hasn't already
+                if (typeof gapi !== 'undefined' && typeof gapi.client !== 'undefined' && !gapi.auth2.getAuthInstance()) {
+                     gapi.load('client:auth2', initClient);
+                } else if (typeof gapi !== 'undefined' && typeof gapi.client !== 'undefined' && gapi.auth2.getAuthInstance() && !googleAuth) {
+                    googleAuth = gapi.auth2.getAuthInstance(); // Assign if already loaded by the script
+                }
+
+            } else {
+                console.log("User not authenticated. Redirecting to signup.html.");
+                window.location.href = 'signup.html'; // Redirect to sign-up/sign-in page
+            }
+        });
+
+        // --- Google API Client Library Initialization ---
+        function gapiLoaded() {
+            gapi.load('client:auth2', initClient);
+        }
+
+        async function initClient() {
+            try {
+                await gapi.client.init({
+                    apiKey: API_KEY,
+                    clientId: CLIENT_ID,
+                    discoveryDocs: DISCOVERY_DOCS,
+                    scope: SCOPES,
+                });
+                googleAuth = gapi.auth2.getAuthInstance();
+                googleAuth.isSignedIn.listen(updateSignInStatus);
+                updateSignInStatus(googleAuth.isSignedIn.get());
+                console.log("Google API client loaded and initialized.");
+            } catch (error) {
+                console.error("Error initializing Google API client:", error);
+                // alert("Failed to initialize Google API. Please check console for details.");
+            }
+        }
+
+        function updateSignInStatus(isSignedIn) {
+            if (isSignedIn) {
+                console.log("User is signed in to Google Calendar API.");
+            } else {
+                console.log("User is signed out from Google Calendar API.");
+            }
+        }
+
+        async function handleGoogleAuthClick() {
+            if (!googleAuth.isSignedIn.get()) {
+                try {
+                    await googleAuth.signIn();
+                    console.log("User signed in to Google Calendar API.");
+                } catch (error) {
+                    console.error("Error signing in to Google Calendar API:", error);
+                    alert("Failed to sign in to Google. Please ensure pop-ups are allowed and try again.");
+                }
+            } else {
+                console.log("User already signed in to Google Calendar API.");
+            }
+        }
+
+        // --- Utility Functions ---
+        function getFormattedDate(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // --- Calendar Rendering ---
+        function renderCalendar() {
+            calendarDays.innerHTML = ''; // Clear previous days
+            currentMonthYear.textContent = currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth(); // 0-indexed
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const numDaysInMonth = lastDayOfMonth.getDate();
+
+            const firstDayOfWeek = firstDayOfMonth.getDay(); // 0 = Sunday, 6 = Saturday
+
+            // Fill in empty leading days
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.classList.add('calendar-day', 'empty');
+                calendarDays.appendChild(dayDiv);
+            }
+
+            // Fill in actual days
+            for (let day = 1; day <= numDaysInMonth; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.classList.add('calendar-day');
+                dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
+                dayDiv.dataset.date = getFormattedDate(new Date(year, month, day)); // Store date for easy access
+
+                const today = new Date();
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dayDiv.classList.add('today');
+                }
+
+                // Add event indicators and list
+                const dayEvents = events.filter(event => event.date === dayDiv.dataset.date)
+                                        .sort((a, b) => a.time.localeCompare(b.time)); // Sort events by time
+
+                if (dayEvents.length > 0) {
+                    const eventList = document.createElement('ul');
+                    eventList.classList.add('event-list');
+                    dayEvents.forEach(event => {
+                        const eventItem = document.createElement('li');
+                        eventItem.textContent = `${event.time} ${event.title}`;
+                        eventItem.dataset.eventId = event.id; // Store event ID
+                        eventItem.classList.add('event-item'); // Add a class for event items
+                        // Check if the event is in the past
+                        const eventDateTime = new Date(`${event.date}T${event.time}`);
+                        if (eventDateTime < new Date()) {
+                            eventItem.classList.add('past-event');
+                        }
+                        eventList.appendChild(eventItem);
+                    });
+                    dayDiv.appendChild(eventList);
+                }
+
+                dayDiv.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('event-item')) {
+                        const eventId = e.target.dataset.eventId;
+                        editEvent(eventId);
+                    } else if (!dayDiv.classList.contains('empty')) {
+                        openEventModal(dayDiv.dataset.date);
+                    }
+                });
+
+                calendarDays.appendChild(dayDiv);
+            }
+        }
+
+        // --- Event Management (Firebase Realtime Database) ---
+        function openEventModal(date = '') {
+            eventModal.classList.add('active');
+            eventForm.reset();
+            eventIdInput.value = '';
+            deleteEventBtn.style.display = 'none';
+            startMeetingCompanionBtn.style.display = 'none';
+            eventModalTitle.textContent = 'Add New Event';
+            eventMeetLinkInput.value = '';
+            addMeetLinkCheckbox.checked = false;
+            eventRecordingLinkInput.value = '';
+            eventRecordingPathInput.value = '';
+
+            if (date) {
+                eventDateInput.value = date;
+            } else {
+                eventDateInput.value = getFormattedDate(new Date());
+            }
+            const now = new Date();
+            const minutes = Math.ceil(now.getMinutes() / 15) * 15;
+            now.setMinutes(minutes);
+            now.setSeconds(0);
+            eventTimeInput.value = now.toTimeString().slice(0, 5);
+        }
+
+        function closeEventModal() {
+            eventModal.classList.remove('active');
+        }
+
+        async function addOrUpdateEvent(e) {
+            e.preventDefault();
+
+            const title = eventTitleInput.value.trim();
+            const date = eventDateInput.value;
+            const time = eventTimeInput.value;
+            const description = eventDescriptionInput.value.trim();
+            const generateMeet = addMeetLinkCheckbox.checked;
+            let meetLink = eventMeetLinkInput.value;
+            const recordingLink = eventRecordingLinkInput.value;
+            const recordingPath = eventRecordingPathInput.value;
+
+
+            if (!title || !date || !time) {
+                alert('Please fill in Event Title, Date, and Time.');
+                return;
+            }
+
+            if (generateMeet && !meetLink) {
+                try {
+                    saveEventBtn.disabled = true;
+                    saveEventBtn.textContent = 'Generating Meet...';
+
+                    meetLink = await createGoogleCalendarEventWithMeet({ title, date, time, description });
+                    eventMeetLinkInput.value = meetLink;
+                } catch (error) {
+                    console.error("Error generating Meet link for event:", error);
+                    alert("Could not generate Google Meet link for the event. Please ensure you are signed in and have granted permissions. Check console for details.");
+                    saveEventBtn.disabled = false;
+                    saveEventBtn.textContent = 'Save Event';
+                    return;
+                } finally {
+                    saveEventBtn.disabled = false;
+                    saveEventBtn.textContent = 'Save Event';
+                }
+            } else if (!generateMeet) {
+                meetLink = '';
+            }
+
+            const eventData = { title, date, time, description, meetLink, recordingLink, recordingPath };
+
+            if (eventIdInput.value) {
+                const idToUpdate = eventIdInput.value;
+                try {
+                    await eventsRef.child(idToUpdate).update(eventData);
+                    alert('Event updated successfully!');
+                } catch (error) {
+                    console.error("Error updating event in Firebase:", error);
+                    alert("Failed to update event. Please try again.");
+                }
+            } else {
+                try {
+                    await eventsRef.push(eventData);
+                    alert('Event added successfully!');
+                } catch (error) {
+                    console.error("Error adding event to Firebase:", error);
+                    alert("Failed to add event. Please try again.");
+                }
+            }
+            closeEventModal();
+        }
+
+        function editEvent(id) {
+            const event = events.find(event => event.id === id);
+            if (event) {
+                eventModal.classList.add('active');
+                eventModalTitle.textContent = 'Edit Event';
+                eventIdInput.value = event.id;
+                eventTitleInput.value = event.title;
+                eventDateInput.value = event.date;
+                eventTimeInput.value = event.time;
+                eventDescriptionInput.value = event.description;
+                eventMeetLinkInput.value = event.meetLink || '';
+                addMeetLinkCheckbox.checked = !!event.meetLink;
+                eventRecordingLinkInput.value = event.recordingLink || '';
+                eventRecordingPathInput.value = event.recordingPath || '';
+
+                deleteEventBtn.style.display = 'block';
+
+                const eventDateTime = new Date(`${event.date}T${event.time}`);
+                const now = new Date();
+                const fiveMinutes = 5 * 60 * 1000;
+                const twentyFourHours = 24 * 60 * 60 * 1000;
+
+                if (eventDateTime >= (now - fiveMinutes) && eventDateTime <= (now + twentyFourHours)) {
+                    startMeetingCompanionBtn.style.display = 'block';
+                    startMeetingCompanionBtn.onclick = () => {
+                        initiateMeetingCompanion(event);
+                        closeEventModal();
+                    };
+                } else {
+                    startMeetingCompanionBtn.style.display = 'none';
+                }
+            }
+        }
+
+        async function deleteEvent() {
+            const idToDelete = eventIdInput.value;
+            if (confirm('Are you sure you want to delete this event?')) {
+                try {
+                    const eventToDelete = events.find(e => e.id === idToDelete);
+                    if (eventToDelete && eventToDelete.recordingPath) {
+                        // Delete recording from Firebase Storage if it exists
+                        const fileRef = recordingsStorageRef.child(eventToDelete.recordingPath);
+                        await fileRef.delete().then(() => {
+                            console.log('Recording deleted from storage:', eventToDelete.recordingPath);
+                        }).catch((error) => {
+                            console.warn('Could not delete recording from storage (it might not exist or permissions issue):', error);
+                        });
+                    }
+                    await eventsRef.child(idToDelete).remove(); // Delete event from Realtime Database
+                    alert('Event deleted.');
+                } catch (error) {
+                    console.error("Error deleting event:", error);
+                    alert("Failed to delete event. Please try again.");
+                }
+                closeEventModal();
+            }
+        }
+
+        // --- Google Meet Integration ---
+        async function createGoogleCalendarEventWithMeet(eventDetails) {
+            if (!googleAuth || !googleAuth.isSignedIn.get()) {
+                alert("Please sign in to your Google account to create a Google Meet link.");
+                await handleGoogleAuthClick();
+                if (!googleAuth.isSignedIn.get()) {
+                    throw new Error("User did not sign in to Google. Cannot create Meet link.");
+                }
+            }
+
+            const startDateTime = new Date(`${eventDetails.date}T${eventDetails.time}:00`);
+            const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // Default 1 hour duration
+
+            const eventBody = {
+                summary: eventDetails.title,
+                description: eventDetails.description,
+                start: {
+                    dateTime: startDateTime.toISOString(),
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                },
+                end: {
+                    dateTime: endDateTime.toISOString(),
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                },
+                conferenceData: {
+                    createRequest: {
+                        requestId: db.ref().push().key, // Unique request ID for Meet creation
+                        conferenceSolutionKey: {
+                            type: 'hangoutsMeet'
+                        }
+                    }
+                },
+            };
+
+            try {
+                const response = await gapi.client.calendar.events.insert({
+                    'calendarId': 'primary',
+                    'resource': eventBody,
+                    'conferenceDataVersion': 1
+                });
+
+                const meetLink = response.result.hangoutLink;
+                console.log('Google Meet event created:', response.result);
+                return meetLink;
+
+            } catch (err) {
+                console.error('Error creating Google Calendar event or Meet link:', err);
+                if (err.result && err.result.error && err.result.error.message) {
+                    alert(`Failed to create Google Meet link: ${err.result.error.message}. Please check Google Console for API enablement and user permissions.`);
+                } else {
+                    alert('Failed to create Google Meet link. Check console for details.');
+                }
+                throw err;
+            }
+        }
+
+        function copyMeetLink() {
+            const link = meetUrlOutput.textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                alert('Google Meet link copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy the link. Please copy it manually.');
+            });
+        }
+
+        function openMeetLink() {
+            const link = meetUrlOutput.textContent;
+            if (link) {
+                window.open(link, '_blank');
+            }
+            closeMeetModal();
+        }
+
+        function closeMeetModal() {
+            meetModal.classList.remove('active');
+        }
+
+        // --- Meeting Companion & Audio Recording (Firebase Storage) ---
+        async function initiateMeetingCompanion(event) {
+            if (recordingStatusDiv.classList.contains('active')) {
+                alert('A recording is already in progress for another meeting. Please stop it first.');
+                return;
+            }
+
+            if (!event.meetLink) {
+                alert('This event does not have a Google Meet link associated. Please add one first.');
+                return;
+            }
+
+            activeMeetingEventId = event.id;
+            const eventDateTime = new Date(`${event.date}T${event.time}`);
+            const currentTime = new Date();
+            const recordingStartDelayMs = 30 * 1000;
+
+            let actualDelayUntilRecording = eventDateTime.getTime() - currentTime.getTime() + recordingStartDelayMs;
+
+            if (actualDelayUntilRecording < 0) {
+                actualDelayUntilRecording = 0;
+                alert('This meeting has already passed the recording start time. Recording will initiate immediately.');
+            } else if (eventDateTime.getTime() > currentTime.getTime()) {
+                const delayMinutes = Math.round((actualDelayUntilRecording / 60000) - (recordingStartDelayMs / 60000));
+                alert(`Meeting starts in approximately ${delayMinutes} minutes. Companion will automatically open the Meet link and start recording ${Math.ceil(recordingStartDelayMs / 1000)} seconds after the event begins.`);
+            } else {
+                alert(`Meeting is ongoing. Companion will open the Meet link and start recording in ${Math.ceil(actualDelayUntilRecording / 1000)} seconds.`);
+            }
+
+            recordingStatusDiv.classList.add('active');
+            stopRecordingBtn.style.display = 'block';
+            downloadRecordingBtn.style.display = 'none';
+            playRecordingBtn.style.display = 'none';
+            audioPlayback.style.display = 'none';
+
+            window.open(event.meetLink, '_blank');
+
+            recordingTimeout = setTimeout(async () => {
+                console.log("Attempting to start recording...");
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const fileName = `${event.id}_${new Date().getTime()}.webm`;
+                        // Store in 'recordings' folder within user's bucket
+                        const filePath = `${event.id}/${fileName}`;
+                        const fileRef = recordingsStorageRef.child(filePath);
+
+                        try {
+                            const uploadTaskSnapshot = await fileRef.put(audioBlob);
+                            const downloadURL = await uploadTaskSnapshot.ref.getDownloadURL();
+                            console.log('Recording uploaded to Firebase Storage:', downloadURL);
+
+                            // Update event in Firebase Realtime Database
+                            await eventsRef.child(event.id).update({
+                                recordingLink: downloadURL,
+                                recordingPath: filePath
+                            });
+
+                            audioPlayback.src = downloadURL;
+                            audioPlayback.style.display = 'block';
+                            downloadRecordingBtn.href = downloadURL;
+                            downloadRecordingBtn.download = `vital_it_meeting_recording_${event.title.replace(/\s/g, '_')}.webm`;
+
+                            downloadRecordingBtn.style.display = 'block';
+                            playRecordingBtn.style.display = 'block';
+                            stopRecordingBtn.style.display = 'none';
+                            activeMeetingEventId = null;
+                            recordingStatusDiv.classList.remove('active');
+
+                            stream.getTracks().forEach(track => track.stop());
+                            alert('Recording stopped and saved to cloud. You can now download or play it using the controls below.');
+
+                        } catch (uploadError) {
+                            console.error('Error uploading recording to Firebase Storage:', uploadError);
+                            alert('Recording stopped, but failed to save to cloud. Error: ' + uploadError.message);
+                            stream.getTracks().forEach(track => track.stop());
+                            recordingStatusDiv.classList.remove('active');
+                            stopRecordingBtn.style.display = 'none';
+                            downloadRecordingBtn.style.display = 'none';
+                            playRecordingBtn.style.display = 'none';
+                            activeMeetingEventId = null;
+                        }
+                    };
+
+                    mediaRecorder.onerror = (e) => {
+                        console.error("MediaRecorder error:", e);
+                        alert("Recording failed. Please check microphone access and try again. Error: " + e.error.message);
+                        recordingStatusDiv.classList.remove('active');
+                        stopRecordingBtn.style.display = 'none';
+                        downloadRecordingBtn.style.display = 'none';
+                        playRecordingBtn.style.display = 'none';
+                        audioPlayback.style.display = 'none';
+                        activeMeetingEventId = null;
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+
+                    mediaRecorder.start();
+                    console.log('Recording started!');
+                    alert('Audio recording has started! Please keep this browser tab active and focused for the recording to continue. Closing the tab or navigating away may stop the recording.');
+
+                } catch (err) {
+                    console.error('Error accessing microphone or starting recording:', err);
+                    alert('Could not start recording. Please ensure microphone permissions are granted and try again. Error: ' + err.message);
+                    recordingStatusDiv.classList.remove('active');
+                    stopRecordingBtn.style.display = 'none';
+                    downloadRecordingBtn.style.display = 'none';
+                    playRecordingBtn.style.display = 'none';
+                    audioPlayback.style.display = 'none';
+                    activeMeetingEventId = null;
+                }
+            }, actualDelayUntilRecording);
+        }
+
+        function stopCurrentRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                console.log('Recording explicitly stopped by user.');
+                clearTimeout(recordingTimeout);
+            } else if (recordingTimeout) {
+                clearTimeout(recordingTimeout);
+                alert('Scheduled recording start cancelled.');
+                recordingStatusDiv.classList.remove('active');
+                stopRecordingBtn.style.display = 'none';
+                downloadRecordingBtn.style.display = 'none';
+                playRecordingBtn.style.display = 'none';
+                audioPlayback.style.display = 'none';
+                activeMeetingEventId = null;
+            } else {
+                alert('No active recording or scheduled recording to stop.');
+            }
+        }
+
+        // --- Event Listeners ---
+        prevMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        addEventBtn.addEventListener('click', () => openEventModal());
+
+        createMeetBtn.addEventListener('click', async () => {
+            try {
+                const title = prompt("Enter a title for the quick Google Meet:", "Quick Vital IT Meeting");
+                if (!title) {
+                    alert("Quick Meet generation cancelled.");
+                    return;
+                }
+                const description = "One-off meeting generated from Vital IT Calendar.";
+                const date = getFormattedDate(new Date());
+                const time = new Date().toTimeString().slice(0, 5);
+
+                const meetLink = await createGoogleCalendarEventWithMeet({
+                    title: title,
+                    description: description,
+                    date: date,
+                    time: time
+                });
+                meetUrlOutput.textContent = meetLink;
+                meetModal.classList.add('active');
+            } catch (error) {
+                console.error('Failed to generate quick meet link:', error);
+            }
+        });
+
+        signOutBtn.addEventListener('click', async () => {
+            try {
+                await auth.signOut();
+                if (googleAuth && googleAuth.isSignedIn.get()) {
+                    await googleAuth.signOut(); // Also sign out from Google API
+                }
+                console.log("User signed out successfully. Redirecting...");
+                // The auth.onAuthStateChanged listener will handle the redirect.
+            } catch (error) {
+                console.error("Error signing out:", error);
+                alert("Failed to sign out. Please try again.");
+            }
+        });
+
+
+        closeButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const modal = e.target.closest('.modal');
+                if (modal) modal.classList.remove('active');
+            });
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        eventForm.addEventListener('submit', addOrUpdateEvent);
+        deleteEventBtn.addEventListener('click', deleteEvent);
+
+        stopRecordingBtn.addEventListener('click', stopCurrentRecording);
+        playRecordingBtn.addEventListener('click', () => {
+            if (audioPlayback.src) {
+                audioPlayback.play();
+                alert('Playing recording. You can control playback using the audio player below.');
+            } else {
+                alert('No recording available to play.');
+            }
+        });
+
+        // Warning for recording in progress on page unload
+        window.addEventListener('beforeunload', (event) => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+
+        // Initial render is now handled by the Firebase `onValue` listener
+        // which triggers upon user authentication.
+    </script>
+</body>
+</html>
