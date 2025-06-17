@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vital IT Calendar - Authentication</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #4CAF50;
+            --primary-green-dark: #45a049;
+            --primary-blue: #3498db;
+            --primary-blue-dark: #2980b9;
+            --text-dark: #2c3e50;
+            --text-medium: #555;
+            --text-light: #7f8c8d;
+            --bg-light: #f0f2f5;
+            --bg-card: #ffffff;
+            --border-light: #ddd;
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
+            --shadow-strong: rgba(0, 0, 0, 0.2);
+            --success-bg: #d4edda;
+            --success-text: #155724;
+            --error-bg: #f8d7da;
+            --error-text: #721c24;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-light);
+            margin: 0;
+            padding: 15px; /* More padding for mobile comfort */
+            box-sizing: border-box;
+            color: var(--text-dark);
+            overflow-x: hidden; /* Prevent horizontal scroll during animations */
+        }
+
+        .auth-container {
+            background-color: var(--bg-card);
+            border-radius: 16px; /* Slightly larger radius for sleek look */
+            box-shadow: 0 10px 30px var(--shadow-medium); /* Enhanced shadow */
+            width: 100%;
+            max-width: 380px; /* Adjusted max-width for better mobile readability */
+            padding: 30px;
+            box-sizing: border-box;
+            text-align: center;
+            position: relative; /* For absolute positioning of sections */
+            overflow: hidden; /* Hide overflowing content during transitions */
+            min-height: 400px; /* Ensure sufficient height for smooth transitions */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h2 {
+            font-size: 1.8em; /* Slightly smaller for mobile-first */
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            font-weight: 700; /* Bolder font for headings */
+        }
+
+        .form-group {
+            margin-bottom: 18px; /* Slightly refined spacing */
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-medium);
+            font-size: 0.9em; /* Slightly smaller labels */
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%; /* Full width */
+            padding: 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px; /* More rounded inputs */
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            -webkit-appearance: none; /* For iOS Safari style reset */
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: var(--primary-green);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25); /* More subtle glow */
+        }
+
+        button {
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 13px 25px; /* Slightly more vertical padding */
+            font-size: 1.05em; /* Adjusted font size */
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            width: 100%;
+            box-shadow: 0 4px 10px var(--shadow-light);
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background-color: var(--primary-green-dark);
+            transform: translateY(-3px); /* More pronounced lift */
+            box-shadow: 0 6px 15px var(--shadow-medium); /* Stronger shadow on hover */
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px var(--shadow-light);
+        }
+
+        .links {
+            margin-top: 20px;
+            font-size: 0.85em; /* Slightly smaller link text */
+            line-height: 1.6; /* Better line spacing for links */
+        }
+
+        .links a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 500;
+        }
+
+        .links a:hover {
+            color: var(--primary-blue-dark);
+            text-decoration: underline;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            text-align: center;
+            opacity: 0; /* Start hidden */
+            transform: translateY(-10px); /* Slide from top */
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            pointer-events: none; /* Do not block clicks when hidden */
+            position: absolute; /* Take out of flow to prevent layout shift */
+            width: calc(100% - 60px); /* Match container padding */
+            left: 30px;
+            top: 10px; /* Position above content */
+            z-index: 10; /* Ensure it's on top */
+        }
+
+        .message.active {
+            opacity: 1; /* Show */
+            transform: translateY(0); /* Slide into place */
+            pointer-events: auto;
+        }
+
+        .message.success {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background-color: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Section visibility control with animations */
+        .auth-section {
+            position: absolute; /* Overlap sections */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 30px; /* Match container padding */
+            box-sizing: border-box;
+            opacity: 0;
+            transform: translateX(100%); /* Start off-screen to the right */
+            transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            pointer-events: none; /* Prevent interaction when hidden */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center; /* Center content within section */
+        }
+
+        .auth-section.active {
+            opacity: 1;
+            transform: translateX(0); /* Slide into view */
+            pointer-events: auto;
+            position: static; /* Bring into document flow when active */
+        }
+
+        /* Ensure smooth flow when sections switch, but maintain absolute for transition */
+        .auth-section:not(.active) {
+             height: 0; /* Collapse height when not active */
+             overflow: hidden; /* Hide content */
+             padding: 0; /* Remove padding */
+             margin: 0; /* Remove margin */
+             /* Remove `position: absolute;` for proper height calculation or manage height dynamically */
+             /* For simpler transitions, keeping it absolute and managing z-index/display is easier */
+             /* For this specific animation, setting display:none after transition is key */
+        }
+
+        /* Adjust `active` class to handle dynamic display */
+        /* This JavaScript-driven approach requires toggling display and then the animation classes */
+        /* To manage transitions properly, we will use a `section-entering` and `section-leaving` class */
+        /* Let's refine the JS to directly manipulate `display` and then add/remove classes for transition */
+        .auth-section.transition-enter {
+            display: block; /* Make it visible for animation */
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        .auth-section.transition-enter.active {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .auth-section.transition-leave {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .auth-section.transition-leave.inactive {
+            transform: translateX(-100%); /* Slide out to the left */
+            opacity: 0;
+        }
+
+        /* For a stacking/fade approach, you can keep position: absolute */
+        /* The current approach (display block -> transition -> active) is better */
+        /* Let's just adjust the initial hidden state to `display: none` */
+        .auth-section {
+            display: none; /* Hidden by default */
+            position: absolute; /* Take out of flow, overlap */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 30px;
+            box-sizing: border-box;
+            opacity: 0;
+            transform: translateX(10px); /* Start slightly off */
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+            pointer-events: none;
+        }
+        .auth-section.active {
+            display: block; /* Make it visible */
+            opacity: 1;
+            transform: translateX(0); /* Slide into place */
+            pointer-events: auto;
+        }
+        /* To make smooth transitions when sections switch */
+        /* When a section becomes inactive, it should animate out before display: none */
+        /* This will be handled by JavaScript using a temporary class and `setTimeout` */
+
+
+        /* Media queries for larger screens */
+        @media (min-width: 600px) {
+            h2 {
+                font-size: 2.2em;
+            }
+            .auth-container {
+                padding: 40px;
+                max-width: 450px; /* Slightly wider on desktops */
+            }
+            input[type="email"],
+            input[type="password"] {
+                padding: 14px;
+                font-size: 1.05em;
+            }
+            button {
+                padding: 14px 30px;
+                font-size: 1.15em;
+            }
+            .message {
+                left: 40px; /* Adjust message position for larger padding */
+                width: calc(100% - 80px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div id="message" class="message"></div>
+
+        <!-- Sign In Section -->
+        <div id="signin-section" class="auth-section active">
+            <h2>Sign In to Vital IT Calendar</h2>
+            <form id="signin-form">
+                <div class="form-group">
+                    <label for="signin-email">Email Address:</label>
+                    <input type="email" id="signin-email" placeholder="email@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="signin-password">Password:</label>
+                    <input type="password" id="signin-password" placeholder="********" required>
+                </div>
+                <button type="submit">Sign In</button>
+            </form>
+            <div class="links">
+                <a href="#" id="forgot-password-link">Forgot Password?</a><br>
+                <a href="#" id="show-signup-link-from-signin">Don't have an account? Sign Up</a>
+            </div>
+        </div>
+
+        <!-- Sign Up Section -->
+        <div id="signup-section" class="auth-section">
+            <h2>Create Your Vital IT Account</h2>
+            <form id="signup-form">
+                <div class="form-group">
+                    <label for="signup-email">Email Address:</label>
+                    <input type="email" id="signup-email" placeholder="email@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password:</label>
+                    <input type="password" id="signup-password" placeholder="Minimum 6 characters" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="signup-confirm-password">Confirm Password:</label>
+                    <input type="password" id="signup-confirm-password" placeholder="Retype password" required minlength="6">
+                </div>
+                <button type="submit">Sign Up</button>
+            </form>
+            <div class="links">
+                <a href="#" id="show-signin-link-from-signup">Already have an account? Sign In</a>
+            </div>
+        </div>
+
+        <!-- Reset Password Section -->
+        <div id="reset-password-section" class="auth-section">
+            <h2>Reset Password</h2>
+            <form id="reset-password-form">
+                <div class="form-group">
+                    <label for="reset-email">Email Address:</label>
+                    <input type="email" id="reset-email" placeholder="email@example.com" required>
+                </div>
+                <button type="submit">Send Reset Email</button>
+            </form>
+            <div class="links">
+                <a href="#" id="show-signin-link-from-reset">Back to Sign In</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBe9a58zaQCrBSGeWwcIVa_PnZABoH6zV4",
+            authDomain: "tudds-ccd0wn.firebaseapp.com",
+            databaseURL: "https://tudds-ccd0wn-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tudds-ccd0wn",
+            storageBucket: "tudds-ccd0wn.appspot.com",
+            messagingSenderId: "786974954352",
+            appId: "1:786974954352:web:5f933f5a2f9f386d9bb5b5",
+            measurementId: "G-YKTV36XJFS"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // --- DOM Elements ---
+        const messageDiv = document.getElementById('message');
+        const signInSection = document.getElementById('signin-section');
+        const signUpSection = document.getElementById('signup-section');
+        const resetPasswordSection = document.getElementById('reset-password-section');
+
+        const signInForm = document.getElementById('signin-form');
+        const signInEmailInput = document.getElementById('signin-email');
+        const signInPasswordInput = document.getElementById('signin-password');
+
+        const signUpForm = document.getElementById('signup-form');
+        const signUpEmailInput = document.getElementById('signup-email');
+        const signUpPasswordInput = document.getElementById('signup-password');
+        const signUpConfirmPasswordInput = document.getElementById('signup-confirm-password');
+
+        const resetPasswordForm = document.getElementById('reset-password-form');
+        const resetEmailInput = document.getElementById('reset-email');
+
+        const forgotPasswordLink = document.getElementById('forgot-password-link');
+        const showSignUpLinkFromSignIn = document.getElementById('show-signup-link-from-signin');
+        const showSignInLinkFromSignUp = document.getElementById('show-signin-link-from-signup');
+        const showSignInLinkFromReset = document.getElementById('show-signin-link-from-reset');
+
+        let currentActiveSection = signInSection; // Track currently active section element
+
+        // --- UI Management ---
+        function showSection(targetSectionElement) {
+            if (targetSectionElement === currentActiveSection) return; // Already active
+
+            // Animate out current section
+            if (currentActiveSection) {
+                currentActiveSection.classList.remove('active');
+                // Wait for the transition to finish before setting display: none
+                currentActiveSection.addEventListener('transitionend', function handler() {
+                    currentActiveSection.style.display = 'none';
+                    currentActiveSection.removeEventListener('transitionend', handler);
+                }, { once: true });
+            }
+
+            // Animate in new section
+            targetSectionElement.style.display = 'block'; // Make it block to start transition
+            // Use a small timeout to ensure the browser registers display: block before applying active
+            setTimeout(() => {
+                targetSectionElement.classList.add('active');
+            }, 10); // A small delay is often enough
+
+            currentActiveSection = targetSectionElement;
+            displayMessage('', ''); // Clear any previous messages
+        }
+
+        function displayMessage(msg, type) {
+            messageDiv.textContent = msg;
+            messageDiv.className = `message ${type}`;
+            if (msg) {
+                messageDiv.classList.add('active'); // Add active class to animate in
+            } else {
+                messageDiv.classList.remove('active'); // Remove active class to animate out
+            }
+        }
+
+        // --- Firebase Authentication Functions ---
+
+        // Listen for authentication state changes
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in. Redirect to the main calendar page.
+                console.log("User signed in:", user.email);
+                // Redirect to calendar.html
+                window.location.href = 'calendar.html';
+            } else {
+                // User is signed out. Ensure we are on the sign-in page (or initial state).
+                console.log("User signed out.");
+                // No redirect here, stay on auth page
+            }
+        });
+
+
+        async function handleSignUp(event) {
+            event.preventDefault();
+            displayMessage('', ''); // Clear previous messages
+            const email = signUpEmailInput.value;
+            const password = signUpPasswordInput.value;
+            const confirmPassword = signUpConfirmPasswordInput.value;
+
+            if (password !== confirmPassword) {
+                displayMessage('Passwords do not match.', 'error');
+                return;
+            }
+            if (password.length < 6) {
+                displayMessage('Password should be at least 6 characters.', 'error');
+                return;
+            }
+
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                console.log("User signed up:", userCredential.user);
+                displayMessage('Account created successfully! Redirecting...', 'success');
+                // The onAuthStateChanged listener will handle redirection to calendar.html
+            } catch (error) {
+                console.error("Sign up error:", error);
+                let errorMessage = 'Failed to create account.';
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'This email is already in use.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'The email address is not valid.';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage = 'The password is too weak.';
+                        break;
+                    default:
+                        errorMessage = error.message;
+                        break;
+                }
+                displayMessage(errorMessage, 'error');
+            }
+        }
+
+        async function handleSignIn(event) {
+            event.preventDefault();
+            displayMessage('', ''); // Clear previous messages
+            const email = signInEmailInput.value;
+            const password = signInPasswordInput.value;
+
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                console.log("User signed in:", userCredential.user);
+                displayMessage('Signed in successfully! Redirecting...', 'success');
+                // The onAuthStateChanged listener will handle redirection to calendar.html
+            } catch (error) {
+                console.error("Sign in error:", error);
+                let errorMessage = 'Failed to sign in.';
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        errorMessage = 'Invalid email or password.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'The email address is not valid.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = 'This account has been disabled.';
+                        break;
+                    default:
+                        errorMessage = error.message;
+                        break;
+                }
+                displayMessage(errorMessage, 'error');
+            }
+        }
+
+        async function handleResetPassword(event) {
+            event.preventDefault();
+            displayMessage('', ''); // Clear previous messages
+            const email = resetEmailInput.value;
+
+            try {
+                await auth.sendPasswordResetEmail(email);
+                displayMessage('Password reset email sent! Check your inbox.', 'success');
+                resetPasswordForm.reset();
+                setTimeout(() => {
+                    showSection(signInSection); // Go back to sign-in after message
+                }, 3000); // Give user time to read success message
+            } catch (error) {
+                console.error("Reset password error:", error);
+                let errorMessage = 'Failed to send reset email.';
+                switch (error.code) {
+                    case 'auth/invalid-email':
+                        errorMessage = 'The email address is not valid.';
+                        break;
+                    case 'auth/user-not-found':
+                        errorMessage = 'No user found with this email.';
+                        break;
+                    default:
+                        errorMessage = error.message;
+                        break;
+                }
+                displayMessage(errorMessage, 'error');
+            }
+        }
+
+        // --- Event Listeners ---
+        signInForm.addEventListener('submit', handleSignIn);
+        signUpForm.addEventListener('submit', handleSignUp);
+        resetPasswordForm.addEventListener('submit', handleResetPassword);
+
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection(resetPasswordSection);
+        });
+
+        showSignUpLinkFromSignIn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection(signUpSection);
+        });
+
+        showSignInLinkFromSignUp.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection(signInSection);
+        });
+
+        showSignInLinkFromReset.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection(signInSection);
+        });
+
+        // Initial UI setup
+        // Ensure only the sign-in section is active on load
+        showSection(signInSection);
+    </script>
+</body>
+</html>
